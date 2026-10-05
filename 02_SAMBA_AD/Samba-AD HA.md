@@ -45,13 +45,7 @@ Ce document constitue un livrable d'exploitation à destination des équipes DSI
 #### 2.1.2 Installation des paquets requis
 
 ```bash
-# Mise à jour des paquets
-dnf update -y
-
-# Installation des paquets Samba AD, Kerberos et utilitaires réseau
-dnf install -y samba samba-dc samba-dsdb-modules samba-vfs-modules \
-  samba-winbind-clients samba-common-tools krb5-workstation \
-  bind-utils chrony
+[# https://samba.tranquil.it/doc/fr/samba_config_server-server_install_samba_redhat.html]
 ```
 
 #### 2.1.3 Désactivation des services Samba standards
