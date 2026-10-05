@@ -224,7 +224,7 @@ cp -a /var/lib/samba/private/* /root/backup-dc1/secrets/
 ```bash
 https://samba.tranquil.it/doc/fr/samba_config_server-server_secondary_redhat.html
 ```
-### 3.3 Configuration recommandée `smb.conf` (DC1)
+### 3.3 Configuration recommandée `smb.conf` (DC2)
 
 Éditez le fichier `/etc/samba/smb.conf` :
 
@@ -234,7 +234,7 @@ https://samba.tranquil.it/doc/fr/samba_config_server-server_secondary_redhat.htm
 #       dns strict mode = yes
         dns zone scavenging = yes
 
-        netbios name = PLDC1
+        netbios name = PLDC2
         realm = LDAP.ABEST.OVH
         server role = active directory domain controller
         workgroup = ABEST
@@ -307,7 +307,7 @@ systemctl enable --now samba-ad-dc
 
 ---
 
-## 4. Installation du DC3 – Read-Only Domain Controller (RODC)
+## 4. Installation du DC3 – Read-Only Domain Controller (RODC) (PAS FAIT)
 
 Un RODC est préconisé sur des sites distants ou des zones DMZ/moins sécurisées afin de restreindre le stockage des mots de passe en local.
 
@@ -318,7 +318,8 @@ Un RODC est préconisé sur des sites distants ou des zones DMZ/moins sécurisé
 | **OS** | Rocky Linux 10 |
 | **Hostname** | `pldc3.abest.ovh` |
 | **IP / Masque** | `10.10.30.13/24` |
-| **DNS Primaire** | `10.10.30.10` (DC1) |
+| **DNS Primaire** | `10.10.30.12` (DC1) |
+| **DNS Secondaire** | `10.10.30.12` (DC2) |
 
 ### 4.2 Jointure en tant que RODC
 
@@ -352,7 +353,7 @@ samba-tool drs replicate pldc2 pldc1 "dc=ldap,dc=abest,dc=ovh"
 
 Samba-AD ne supporte pas nativement FRS/DFSR pour SYSVOL. La synchronisation doit être assurée par un outil externe (Rsync via SSH ou Inotify/Unison).
 
-### 6.1 Synchronisation manuelle via Rsync
+### 6.1 Synchronisation
 
 ```bash
 https://samba.tranquil.it/doc/fr/samba_advanced_methods-samba_tis_sysvolsync.html
