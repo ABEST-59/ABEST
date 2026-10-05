@@ -3,7 +3,7 @@
 **Architecture :** DC1 (Master) / DC2 (Secondary) / DC3 (RODC)  
 **Domaine :** ldap.abest.ovh | **NetBIOS :** ABEST  
 
-![Texte alternatif](02_SAMBA_AD/Images/image.png)
+![Texte alternatif](Images/image.png)
 ---
 
 ## 1. Introduction
