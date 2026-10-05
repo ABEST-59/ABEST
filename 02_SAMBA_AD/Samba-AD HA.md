@@ -216,8 +216,80 @@ cp -a /var/lib/samba/private/* /root/backup-dc1/secrets/
 ```bash
 https://samba.tranquil.it/doc/fr/samba_config_server-server_secondary_redhat.html
 ```
+### 3.3 Configuration recommandée `smb.conf` (DC1)
 
-### 3.3 Activation du service et synchronisation initiale
+Éditez le fichier `/etc/samba/smb.conf` :
+
+```ini
+[global]
+        dns forwarder = 8.8.4.4
+#       dns strict mode = yes
+        dns zone scavenging = yes
+
+        netbios name = PLDC1
+        realm = LDAP.ABEST.OVH
+        server role = active directory domain controller
+        workgroup = ABEST
+        ad dc functional level = 2016
+
+        # disable null session
+        restrict anonymous = 2
+
+        # disable netbios
+        disable netbios = yes
+        smb ports = 445
+
+        # disable printing services
+        printcap name = /dev/null
+        load printers = no
+        disable spoolss = yes
+        printing = bsd
+
+
+        # enable extra hashes
+        password hash userPassword schemes = CryptSHA256 CryptSHA512
+
+        # install valid certificate
+        tls enabled = yes
+        tls keyfile = /etc/samba/tls/key.pem
+        tls certfile = /etc/samba/tls/cert.pem
+        tls cafile = /etc/samba/tls/ca.pem
+        #tls priority = NONE:+SECURE256:-VERS-ALL:+VERS-TLS1.2:+VERS-TLS1.3
+        #tls crlfile = /etc/samba/tls/mydomain_authentication.crl
+        #tls dhparams file = /etc/samba/tls/srvads.mydomain.lan.dhparams
+
+        ldap server require strong auth = yes
+
+        # enable audit log
+        log level = 1 \
+          auth_json_audit:3@/var/log/samba/auth_json_audit.log \
+          dsdb_json_audit:5@/var/log/samba/dsdb_json_audit.log \
+          dsdb_password_json_audit:9@/var/log/samba/dsdb_password_json_audit.log \
+          dsdb_group_json_audit:9@/var/log/samba/dsdb_group_json_audit.log \
+          kerberos:3@/var/log/samba/kerberos.log \
+          dns:0
+
+        # sysvol write log
+        full_audit:failure = none
+        full_audit:success = pwrite write renameat
+        full_audit:prefix = IP=%I|USER=%u|MACHINE=%m|VOLUME=%S
+        full_audit:facility = local7
+        full_audit:priority = NOTICE
+
+
+[sysvol]
+        path = /var/lib/samba/sysvol
+        read only = No
+        vfs objects = dfs_samba4, acl_xattr, full_audit
+
+[netlogon]
+        path = /var/lib/samba/sysvol/ldap.abest.ovh/scripts
+        read only = No
+        vfs objects = dfs_samba4, acl_xattr, full_audit
+```
+
+---
+### 3.4 Activation du service et synchronisation initiale
 
 ```bash
 cp /var/lib/samba/private/krb5.conf /etc/krb5.conf
