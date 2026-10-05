@@ -42,69 +42,11 @@ Ce document constitue un livrable d'exploitation à destination des équipes DSI
 | **Nom NetBIOS** | `ABEST` |
 | **DNS primaire** | `127.0.0.1` |
 
-#### 2.1.2 Installation des paquets requis
+#### 2.1.2 Installation avec les infos suivantes
 
 ```bash
 https://samba.tranquil.it/doc/fr/samba_config_server-server_install_samba_redhat.html
 ```
-
-#### 2.1.3 Désactivation des services Samba standards
-
-Afin d'éviter toute interférence avec le rôle Active Directory Domain Controller (`samba`), les services fichiers et nommage autonomes doivent être désactivés.
-
-```bash
-systemctl disable --now smb nmb winbind
-```
-
-### 2.2 Préparation et Synchronisation Temporelle (NTP)
-
-Une synchronisation horaire parfaite est indispensable au bon fonctionnement du protocole Kerberos (tolérance maximale de 5 minutes).
-
-```bash
-# Nettoyage des anciennes configurations Samba (si réinstallation)
-rm -rf /var/lib/samba/*
-rm -f /etc/samba/smb.conf
-
-# Activation du service de temps NTP
-systemctl enable --now chronyd
-chronyc tracking
-```
-
----
-
-### 2.3 Provisionnement du domaine AD
-
-#### 2.3.1 Création du Domaine (Domain Provision)
-
-```bash
-samba-tool domain provision \
-  --use-rfc2307 \
-  --realm=LDAP.ABEST.OVH \
-  --domain=ABEST \
-  --server-role=dc \
-  --dns-backend=SAMBA_INTERNAL \
-  --adminpass='VotreMotDePasseComplexe123!'
-```
-
-#### 2.3.2 Configuration Kerberos
-
-Copie du fichier de configuration Kerberos généré lors du provisionnement :
-
-```bash
-cp /var/lib/samba/private/krb5.conf /etc/krb5.conf
-```
-
----
-
-### 2.4 Activation et démarrage du service Samba‑AD
-
-```bash
-systemctl unmask samba-ad-dc
-systemctl enable --now samba-ad-dc
-systemctl status samba-ad-dc
-```
-
----
 
 ### 2.5 Validation DNS et Kerberos
 
@@ -153,29 +95,70 @@ samba-tool drs showrepl
 
 ```ini
 [global]
-    netbios name = PLDC1
-    workgroup = ABEST
-    realm = LDAP.ABEST.OVH
-    server role = active directory domain controller
-    dns forwarder = 8.8.8.8 8.8.4.4
+        dns forwarder = 8.8.4.4
+#       dns strict mode = yes
+        dns zone scavenging = yes
 
-    # Sécurité et durcissement
-    ntlm auth = disabled
-    server signing = mandatory
-    client ipc signing = mandatory
-    client ldap sasl wrapping = sign
-    ldap server require strong auth = yes
+        netbios name = PLDC1
+        realm = LDAP.ABEST.OVH
+        server role = active directory domain controller
+        workgroup = ABEST
+        ad dc functional level = 2016
 
-    # VFS Modules
-    vfs objects = dfs_samba4 acl_xattr
+        # disable null session
+        restrict anonymous = 2
+
+        # disable netbios
+        disable netbios = yes
+        smb ports = 445
+
+        # disable printing services
+        printcap name = /dev/null
+        load printers = no
+        disable spoolss = yes
+        printing = bsd
+
+
+        # enable extra hashes
+        password hash userPassword schemes = CryptSHA256 CryptSHA512
+
+        # install valid certificate
+        tls enabled = yes
+        tls keyfile = /etc/samba/tls/key.pem
+        tls certfile = /etc/samba/tls/cert.pem
+        tls cafile = /etc/samba/tls/ca.pem
+        #tls priority = NONE:+SECURE256:-VERS-ALL:+VERS-TLS1.2:+VERS-TLS1.3
+        #tls crlfile = /etc/samba/tls/mydomain_authentication.crl
+        #tls dhparams file = /etc/samba/tls/srvads.mydomain.lan.dhparams
+
+        ldap server require strong auth = yes
+
+        # enable audit log
+        log level = 1 \
+          auth_json_audit:3@/var/log/samba/auth_json_audit.log \
+          dsdb_json_audit:5@/var/log/samba/dsdb_json_audit.log \
+          dsdb_password_json_audit:9@/var/log/samba/dsdb_password_json_audit.log \
+          dsdb_group_json_audit:9@/var/log/samba/dsdb_group_json_audit.log \
+          kerberos:3@/var/log/samba/kerberos.log \
+          dns:0
+
+        # sysvol write log
+        full_audit:failure = none
+        full_audit:success = pwrite write renameat
+        full_audit:prefix = IP=%I|USER=%u|MACHINE=%m|VOLUME=%S
+        full_audit:facility = local7
+        full_audit:priority = NOTICE
+
 
 [sysvol]
-    path = /var/lib/samba/sysvol
-    read only = No
+        path = /var/lib/samba/sysvol
+        read only = No
+        vfs objects = dfs_samba4, acl_xattr, full_audit
 
 [netlogon]
-    path = /var/lib/samba/sysvol/ldap.abest.ovh/scripts
-    read only = No
+        path = /var/lib/samba/sysvol/ldap.abest.ovh/scripts
+        read only = No
+        vfs objects = dfs_samba4, acl_xattr, full_audit
 ```
 
 ---
