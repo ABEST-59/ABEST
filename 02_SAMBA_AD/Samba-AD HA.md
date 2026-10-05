@@ -45,7 +45,7 @@ Ce document constitue un livrable d'exploitation à destination des équipes DSI
 #### 2.1.2 Installation des paquets requis
 
 ```bash
-[# https://samba.tranquil.it/doc/fr/samba_config_server-server_install_samba_redhat.html]
+https://samba.tranquil.it/doc/fr/samba_config_server-server_install_samba_redhat.html
 ```
 
 #### 2.1.3 Désactivation des services Samba standards
