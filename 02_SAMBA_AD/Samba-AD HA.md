@@ -3,7 +3,7 @@
 **Architecture :** DC1 (Master) / DC2 (Secondary) / DC3 (RODC)  
 **Domaine :** ldap.abest.ovh | **NetBIOS :** ABEST  
 
-![Texte alternatif](Images/image.png)
+
 ---
 
 ## 1. Introduction
@@ -24,6 +24,7 @@ Cette documentation traite des sujets suivants :
 
 Ce document constitue un livrable d'exploitation à destination des équipes DSI, RSSI et Administrateurs Systèmes & Réseaux.
 
+![Texte alternatif](Images/image.png)
 ---
 
 ## 2. Installation du DC1 – Premier Contrôleur de Domaine
