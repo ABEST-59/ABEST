@@ -431,9 +431,9 @@ Les 5 rôles FSMO (Flexible Single Master Operations) assurent l'unicité de cer
 | :--- | :--- | :--- | :--- |
 | **Schema Master** | Forêt | Modification du schéma AD | **DC1** |
 | **Domain Naming Master** | Forêt | Ajout/Suppression de domaines | **DC1** |
-| **PDC Emulator** | Domaine | Gestion du temps, GPO, Mots de passe (Critique) | **DC1** |
+| **PDC Emulator** | Domaine | Gestion du temps, GPO, Mots de passe (Critique) | **DC2** |
 | **RID Master** | Domaine | Attribution des RID pour la création d'objets | **DC1** |
-| **Infrastructure Master**| Domaine | Références inter-domaines | **DC2** (ou DC1) |
+| **Infrastructure Master**| Domaine | Références inter-domaines | **DC2** |
 
 ### 9.2 Transfert et Seize (Saisie d'urgence) des rôles FSMO
 
