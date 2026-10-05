@@ -214,17 +214,7 @@ cp -a /var/lib/samba/private/* /root/backup-dc1/secrets/
 ### 3.2 Installation et jointure du DC2 au domaine
 
 ```bash
-# Installation des paquets
-dnf install -y samba samba-dc samba-winbind-clients krb5-workstation bind-utils chrony
-
-# Arrêt et désactivation des services Samba autonomes
-systemctl disable --now smb nmb winbind
-
-# Jointure en tant que Contrôleur de Domaine additionnel
-samba-tool domain join ldap.abest.ovh DC \
-  --realm=LDAP.ABEST.OVH \
-  --dns-backend=SAMBA_INTERNAL \
-  -U "ABEST\Administrator"
+https://samba.tranquil.it/doc/fr/samba_config_server-server_secondary_redhat.html
 ```
 
 ### 3.3 Activation du service et synchronisation initiale
