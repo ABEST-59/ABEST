@@ -162,7 +162,15 @@ samba-tool drs showrepl
 ```
 
 ---
+### 2.6 Configuration recommandée Niveau fonctionnel / Schema AD (DC1)
 
+Éditez le fichier `/etc/samba/smb.conf` :
+
+```ini
+https://samba.tranquil.it/doc/fr/samba_advanced_methods-samba_raise_fl2016.html
+```
+
+---
 ### 2.7 Intégration d'un Poste d'Administration (PMADM) et outils RSAT
 
 Pour gérer le domaine Samba-AD à distance depuis une machine Windows d'administration (ex: `PMADM`) :
