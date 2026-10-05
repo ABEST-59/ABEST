@@ -243,14 +243,7 @@ Un RODC est préconisé sur des sites distants ou des zones DMZ/moins sécurisé
 ### 4.2 Jointure en tant que RODC
 
 ```bash
-samba-tool domain join ldap.abest.ovh RODC \
-  --realm=LDAP.ABEST.OVH \
-  --dns-backend=SAMBA_INTERNAL \
-  -U "ABEST\Administrator"
-
-# Démarrage du service
-systemctl unmask samba-ad-dc
-systemctl enable --now samba-ad-dc
+https://samba.tranquil.it/doc/fr/samba_config_server-server_rodc_redhat.html
 ```
 
 ---
@@ -281,47 +274,9 @@ Samba-AD ne supporte pas nativement FRS/DFSR pour SYSVOL. La synchronisation doi
 
 ### 6.1 Synchronisation manuelle via Rsync
 
-Depuis `DC1` vers `DC2` (en préservant les ACLs et attributs étendus XATTR) :
-
 ```bash
-rsync -XAavz --delete /var/lib/samba/sysvol/ root@10.10.30.12:/var/lib/samba/sysvol/
+https://samba.tranquil.it/doc/fr/samba_advanced_methods-samba_tis_sysvolsync.html
 ```
-
-### 6.2 Automatisation par Service et Timer Systemd (DC1)
-
-Créer le fichier `/etc/systemd/system/sysvol-sync.service` :
-
-```ini
-[Unit]
-Description=Synchronisation SYSVOL vers DC2
-After=network.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/rsync -XAavz --delete /var/lib/samba/sysvol/ root@10.10.30.12:/var/lib/samba/sysvol/
-```
-
-Créer le timer `/etc/systemd/system/sysvol-sync.timer` :
-
-```ini
-[Unit]
-Description=Timer de synchronisation SYSVOL (Toutes les 5 min)
-
-[Timer]
-OnCalendar=*:0/5
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-```
-
-Activer le timer :
-```bash
-systemctl daemon-reload
-systemctl enable --now sysvol-sync.timer
-```
-
----
 
 ## 7. Sauvegardes Samba‑AD
 
