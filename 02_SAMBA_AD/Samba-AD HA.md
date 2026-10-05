@@ -1,44 +1,485 @@
 # Samba‑AD Haute Disponibilité – Documentation Technique
-Plateforme : Rocky Linux 10  
-Architecture : DC1 / DC2 / DC3 (RODC)
+**Plateforme :** Rocky Linux 10  
+**Architecture :** DC1 (Master) / DC2 (Secondary) / DC3 (RODC)  
+**Domaine :** ldap.abest.ovh | **NetBIOS :** ABEST  
 
 ---
 
 ## 1. Introduction
 
-Ce document décrit une architecture complète de Samba Active Directory en haute disponibilité, incluant :
+Ce dossier technique présente une architecture complète de haute disponibilité (HA) et de résilience pour un domaine **Samba Active Directory (Samba-AD)** sous **Rocky Linux 10**.
 
-- Installation du DC1 (premier contrôleur de domaine)
-- Installation du DC2 (contrôleur secondaire répliqué)
-- Installation du DC3 RODC
-- Réplication AD (DSDB + LDB + SYSVOL)
-- Synchronisation SYSVOL
-- Mécanismes de bascule
-- Sauvegardes (offline, secrets, SYSVOL)
-- Procédures de restauration
-- Bonnes pratiques de sécurité et supervision
+Cette documentation traite des sujets suivants :
+- Provisionnement du premier contrôleur de domaine (`DC1`).
+- Jointure et intégration d'un contrôleur secondaire (`DC2`).
+- Déploiement d'un contrôleur de domaine en lecture seule (`DC3 - RODC`).
+- Réplication Active Directory (DRS / DSDB / LDB).
+- Synchronisation bi-directionnelle / mono-directionnelle de `SYSVOL`.
+- Gestion des rôles FSMO (Flexible Single Master Operations).
+- Procédures de sauvegardes régulières (Offline, SYSVOL, Secrets).
+- Plan de reprise d'activité (Restauration Offline, Bare-Metal, Granulaire).
+- Intégration des postes d'administration et outils RSAT.
+- Durcissement de la sécurité (`smb.conf`, Kerberos, NTLM) et supervision.
+
+Ce document constitue un livrable d'exploitation à destination des équipes DSI, RSSI et Administrateurs Systèmes & Réseaux.
 
 ---
 
 ## 2. Installation du DC1 – Premier Contrôleur de Domaine
 
-### 2.1 Pré‑requis
+### 2.1 Pré‑requis et préparation système
 
-#### 2.1.1 Configuration système
+#### 2.1.1 Configuration Réseau & Système
 
 | Élément | Valeur |
-|--------|--------|
-| OS | Rocky Linux 10 |
-| VLAN | ADMIN |
-| IP | 10.10.30.10/24 |
-| Hostname | pldc1.abest.ovh |
-| Domaine AD | ldap.abest.ovh |
-| NetBIOS | ABEST |
-| DNS | 127.0.0.1 |
+| :--- | :--- |
+| **Système d'exploitation** | Rocky Linux 10 |
+| **VLAN** | ADMIN |
+| **Adresse IP / Masque** | `10.10.30.10/24` |
+| **Passerelle** | `10.10.30.254` |
+| **Nom FQDN (Hostname)** | `pldc1.abest.ovh` |
+| **Domaine AD (Realm)** | `LDAP.ABEST.OVH` |
+| **Nom NetBIOS** | `ABEST` |
+| **DNS primaire** | `127.0.0.1` |
 
-#### 2.1.2 Installation des paquets
+#### 2.1.2 Installation des paquets requis
 
 ```bash
-dnf install samba samba-dc samba-dsdb-modules samba-vfs-modules \
+# Mise à jour des paquets
+dnf update -y
+
+# Installation des paquets Samba AD, Kerberos et utilitaires réseau
+dnf install -y samba samba-dc samba-dsdb-modules samba-vfs-modules \
   samba-winbind-clients samba-common-tools krb5-workstation \
-  bind-utils chrony -y
+  bind-utils chrony
+```
+
+#### 2.1.3 Désactivation des services Samba standards
+
+Afin d'éviter toute interférence avec le rôle Active Directory Domain Controller (`samba`), les services fichiers et nommage autonomes doivent être désactivés.
+
+```bash
+systemctl disable --now smb nmb winbind
+```
+
+### 2.2 Préparation et Synchronisation Temporelle (NTP)
+
+Une synchronisation horaire parfaite est indispensable au bon fonctionnement du protocole Kerberos (tolérance maximale de 5 minutes).
+
+```bash
+# Nettoyage des anciennes configurations Samba (si réinstallation)
+rm -rf /var/lib/samba/*
+rm -f /etc/samba/smb.conf
+
+# Activation du service de temps NTP
+systemctl enable --now chronyd
+chronyc tracking
+```
+
+---
+
+### 2.3 Provisionnement du domaine AD
+
+#### 2.3.1 Création du Domaine (Domain Provision)
+
+```bash
+samba-tool domain provision \
+  --use-rfc2307 \
+  --realm=LDAP.ABEST.OVH \
+  --domain=ABEST \
+  --server-role=dc \
+  --dns-backend=SAMBA_INTERNAL \
+  --adminpass='VotreMotDePasseComplexe123!'
+```
+
+#### 2.3.2 Configuration Kerberos
+
+Copie du fichier de configuration Kerberos généré lors du provisionnement :
+
+```bash
+cp /var/lib/samba/private/krb5.conf /etc/krb5.conf
+```
+
+---
+
+### 2.4 Activation et démarrage du service Samba‑AD
+
+```bash
+systemctl unmask samba-ad-dc
+systemctl enable --now samba-ad-dc
+systemctl status samba-ad-dc
+```
+
+---
+
+### 2.5 Validation DNS et Kerberos
+
+#### 2.5.1 Tests de résolution DNS interne
+
+```bash
+# Test des enregistrements SRV LDAP
+dig @127.0.0.1 _ldap._tcp.ldap.abest.ovh SRV
+
+# Test des enregistrements SRV Kerberos
+dig @127.0.0.1 _kerberos._tcp.ldap.abest.ovh SRV
+
+# Test de résolution directe du domaine
+dig @127.0.0.1 ldap.abest.ovh
+```
+
+#### 2.5.2 Validation de l'authentification Kerberos
+
+```bash
+# Demande de ticket Kerberos pour l'administrateur
+kinit administrator@LDAP.ABEST.OVH
+
+# Affichage des tickets enregistrés
+klist
+```
+
+#### 2.5.3 Verification de l'annuaire LDAP
+
+```bash
+ldapsearch -H ldap://127.0.0.1 -x -b "dc=ldap,dc=abest,dc=ovh"
+```
+
+#### 2.5.4 Vérification via samba-tool
+
+```bash
+samba-tool user list
+samba-tool group list
+samba-tool drs showrepl
+```
+
+---
+
+### 2.6 Configuration recommandée `smb.conf` (DC1)
+
+Éditez le fichier `/etc/samba/smb.conf` :
+
+```ini
+[global]
+    netbios name = PLDC1
+    workgroup = ABEST
+    realm = LDAP.ABEST.OVH
+    server role = active directory domain controller
+    dns forwarder = 8.8.8.8 8.8.4.4
+
+    # Sécurité et durcissement
+    ntlm auth = disabled
+    server signing = mandatory
+    client ipc signing = mandatory
+    client ldap sasl wrapping = sign
+    ldap server require strong auth = yes
+
+    # VFS Modules
+    vfs objects = dfs_samba4 acl_xattr
+
+[sysvol]
+    path = /var/lib/samba/sysvol
+    read only = No
+
+[netlogon]
+    path = /var/lib/samba/sysvol/ldap.abest.ovh/scripts
+    read only = No
+```
+
+---
+
+### 2.7 Intégration d'un Poste d'Administration (PMADM) et outils RSAT
+
+Pour gérer le domaine Samba-AD à distance depuis une machine Windows d'administration (ex: `PMADM`) :
+
+1. Rejoindre la machine Windows au domaine `ldap.abest.ovh`.
+2. Installer l'ensemble des fonctionnalités RSAT (Remote Server Administration Tools) via PowerShell en tant qu'Administrateur :
+
+```powershell
+Get-WindowsCapability -Online | Where-Object Name -like 'RSAT*' | Where-Object State -eq 'NotPresent' | ForEach-Object { Add-WindowsCapability -Online -Name $_.Name }
+```
+
+---
+
+### 2.8 Sauvegarde initiale du DC1
+
+#### 2.8.1 Sauvegarde Offline de la base AD (DSDB)
+
+```bash
+mkdir -p /root/backup-dc1/secrets
+samba-tool domain backup offline --targetdir=/root/backup-dc1/
+```
+
+#### 2.8.2 Sauvegarde du volume SYSVOL
+
+```bash
+rsync -XAavz /var/lib/samba/sysvol/ /root/backup-dc1/sysvol/
+```
+
+#### 2.8.3 Sauvegarde des clés et fichiers secrets
+
+```bash
+cp -a /var/lib/samba/private/* /root/backup-dc1/secrets/
+```
+
+---
+
+## 3. Installation du DC2 – Haute Disponibilité (Contrôleur Secondaire)
+
+### 3.1 Pré‑requis du DC2
+
+| Élément | Valeur |
+| :--- | :--- |
+| **OS** | Rocky Linux 10 |
+| **Hostname** | `pldc2.abest.ovh` |
+| **IP / Masque** | `10.10.30.12/24` |
+| **DNS Primaire** | `10.10.30.10` (Pointe vers DC1) |
+| **DNS Secondaire** | `127.0.0.1` |
+
+### 3.2 Installation et jointure du DC2 au domaine
+
+```bash
+# Installation des paquets
+dnf install -y samba samba-dc samba-winbind-clients krb5-workstation bind-utils chrony
+
+# Arrêt et désactivation des services Samba autonomes
+systemctl disable --now smb nmb winbind
+
+# Jointure en tant que Contrôleur de Domaine additionnel
+samba-tool domain join ldap.abest.ovh DC \
+  --realm=LDAP.ABEST.OVH \
+  --dns-backend=SAMBA_INTERNAL \
+  -U "ABEST\Administrator"
+```
+
+### 3.3 Activation du service et synchronisation initiale
+
+```bash
+cp /var/lib/samba/private/krb5.conf /etc/krb5.conf
+systemctl unmask samba-ad-dc
+systemctl enable --now samba-ad-dc
+```
+
+---
+
+## 4. Installation du DC3 – Read-Only Domain Controller (RODC)
+
+Un RODC est préconisé sur des sites distants ou des zones DMZ/moins sécurisées afin de restreindre le stockage des mots de passe en local.
+
+### 4.1 Pré-requis du DC3
+
+| Élément | Valeur |
+| :--- | :--- |
+| **OS** | Rocky Linux 10 |
+| **Hostname** | `pldc3.abest.ovh` |
+| **IP / Masque** | `10.10.30.13/24` |
+| **DNS Primaire** | `10.10.30.10` (DC1) |
+
+### 4.2 Jointure en tant que RODC
+
+```bash
+samba-tool domain join ldap.abest.ovh RODC \
+  --realm=LDAP.ABEST.OVH \
+  --dns-backend=SAMBA_INTERNAL \
+  -U "ABEST\Administrator"
+
+# Démarrage du service
+systemctl unmask samba-ad-dc
+systemctl enable --now samba-ad-dc
+```
+
+---
+
+## 5. Réplication Active Directory (DRS)
+
+### 5.1 Vérification de l'état de réplication
+
+Exécuter sur n'importe quel contrôleur de domaine :
+
+```bash
+samba-tool drs showrepl
+```
+
+### 5.2 Forcer la réplication manuelle
+
+Pour forcer une réplication immédiate depuis `DC1` vers `DC2` :
+
+```bash
+samba-tool drs replicate pldc2 pldc1 "dc=ldap,dc=abest,dc=ovh"
+```
+
+---
+
+## 6. Synchronisation SYSVOL
+
+Samba-AD ne supporte pas nativement FRS/DFSR pour SYSVOL. La synchronisation doit être assurée par un outil externe (Rsync via SSH ou Inotify/Unison).
+
+### 6.1 Synchronisation manuelle via Rsync
+
+Depuis `DC1` vers `DC2` (en préservant les ACLs et attributs étendus XATTR) :
+
+```bash
+rsync -XAavz --delete /var/lib/samba/sysvol/ root@10.10.30.12:/var/lib/samba/sysvol/
+```
+
+### 6.2 Automatisation par Service et Timer Systemd (DC1)
+
+Créer le fichier `/etc/systemd/system/sysvol-sync.service` :
+
+```ini
+[Unit]
+Description=Synchronisation SYSVOL vers DC2
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/rsync -XAavz --delete /var/lib/samba/sysvol/ root@10.10.30.12:/var/lib/samba/sysvol/
+```
+
+Créer le timer `/etc/systemd/system/sysvol-sync.timer` :
+
+```ini
+[Unit]
+Description=Timer de synchronisation SYSVOL (Toutes les 5 min)
+
+[Timer]
+OnCalendar=*:0/5
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+Activer le timer :
+```bash
+systemctl daemon-reload
+systemctl enable --now sysvol-sync.timer
+```
+
+---
+
+## 7. Sauvegardes Samba‑AD
+
+### 7.1 Script de Sauvegarde globale (Offline / System)
+
+Un script quotidien sur le serveur `DC1` doit réaliser la sauvegarde complète :
+
+```bash
+#!/bin/bash
+BACKUP_DIR="/var/backups/samba/$(date +%Y%m%d)"
+mkdir -p "$BACKUP_DIR"
+
+# 1. Sauvegarde Offline AD Database
+samba-tool domain backup offline --targetdir="$BACKUP_DIR/ad-db"
+
+# 2. Sauvegarde SYSVOL
+rsync -XAavz /var/lib/samba/sysvol/ "$BACKUP_DIR/sysvol/"
+
+# 3. Sauvegarde Secrets & Krb5
+cp -p /var/lib/samba/private/randseed.tdb "$BACKUP_DIR/"
+cp -p /var/lib/samba/private/dns.keytab "$BACKUP_DIR/"
+cp -p /etc/krb5.conf "$BACKUP_DIR/"
+
+echo "Sauvegarde Samba-AD réalisée avec succès dans $BACKUP_DIR"
+```
+
+---
+
+## 8. Procédures de Restauration Samba‑AD
+
+### 8.1 Restauration Offline (Bare-Metal)
+
+En cas de perte totale du domaine ou corruption majeure :
+
+1. Stopper les services Samba sur tous les DC :
+   ```bash
+   systemctl stop samba-ad-dc
+   ```
+2. Restaurer la base de données Active Directory :
+   ```bash
+   samba-tool domain backup restore \
+     --backupfile=/var/backups/samba/20261005/ad-db/backup-...tar.bz2 \
+     --targetdir=/var/lib/samba/restore_db
+   ```
+3. Remplacer les répertoires d'exploitation :
+   ```bash
+   rm -rf /var/lib/samba/private /var/lib/samba/sysvol
+   cp -a /var/lib/samba/restore_db/private /var/lib/samba/
+   cp -a /var/lib/samba/restore_db/sysvol /var/lib/samba/
+   ```
+4. Vérifier/Réparer les permissions SYSVOL :
+   ```bash
+   samba-tool ntacl sysvolreset
+   ```
+5. Redémarrer le service :
+   ```bash
+   systemctl start samba-ad-dc
+   ```
+
+---
+
+## 9. Distribution des Rôles FSMO
+
+Les 5 rôles FSMO (Flexible Single Master Operations) assurent l'unicité de certaines opérations au sein de la forêt et du domaine AD.
+
+### 9.1 Matrice de placement des rôles FSMO
+
+| Rôle FSMO | Portée | Description / Recommandation | Placement Conseillé |
+| :--- | :--- | :--- | :--- |
+| **Schema Master** | Forêt | Modification du schéma AD | **DC1** |
+| **Domain Naming Master** | Forêt | Ajout/Suppression de domaines | **DC1** |
+| **PDC Emulator** | Domaine | Gestion du temps, GPO, Mots de passe (Critique) | **DC1** |
+| **RID Master** | Domaine | Attribution des RID pour la création d'objets | **DC1** |
+| **Infrastructure Master**| Domaine | Références inter-domaines | **DC2** (ou DC1) |
+
+### 9.2 Transfert et Seize (Saisie d'urgence) des rôles FSMO
+
+#### Afficher le propriétaire des rôles :
+```bash
+samba-tool fsmo show
+```
+
+#### Transfert gracieux (ex: vers DC2) :
+```bash
+samba-tool fsmo transfer --role=all -U "ABEST\Administrator"
+```
+
+#### Prise de force (Seize) - uniquement si le DC d'origine est définitivement HS :
+```bash
+samba-tool fsmo seize --role=all
+```
+
+---
+
+## 10. Supervision, Monitoring & Audits
+
+### 10.1 Points de contrôle à intégrer au SIEM / Supervision (Nagios/Zabbix/Prometheus)
+
+1. **Vérification du statut du service :**
+   `systemctl is-active samba-ad-dc`
+2. **Vérification de la réplication DRS :**
+   `samba-tool drs showrepl` (Rechercher l'absence d'erreurs `KCC error` ou `WERR_BADFILE`).
+3. **Contrôle d'intégrité de la base LDB :**
+   `samba-tool dbcheck`
+4. **Journaux Samba :**
+   Consulter régulièrement `/var/log/samba/log.samba` et `journalctl -u samba-ad-dc -f`.
+
+---
+
+## 11. Bonnes Pratiques de Sécurité & Durcissement
+
+1. **Minimum 2 Contrôleurs de Domaine fonctionnels** sur le réseau local.
+2. **Désactivation totale de NTLMv1** et limitation des algorithmes de chiffrement faibles (ex: RC4).
+3. **Signature SMB & LDAP obligatoire** pour contrer les attaques de type *Man-In-The-Middle* (MitM) et *Relay*.
+4. **Stratégie d'administration en couches (Tiering Model) :**
+   - **Tier 0 :** Contrôleurs de domaine et comptes Admin du domaine.
+   - **Tier 1 :** Serveurs membres et applications.
+   - **Tier 2 :** Postes de travail et utilisateurs finaux.
+5. **Sauvegarde quotidienne Offline** déportée sur un support froid/sécurisé.
+6. **Mises à jour de sécurité régulières** du système d'exploitation Rocky Linux et des paquets Samba.
+
+---
+
+## 12. Conclusion
+
+Cette documentation technique définit le socle opérationnel requis pour déployer, administrer et maintenir une infrastructure **Samba Active Directory en Haute Disponibilité** sous **Rocky Linux 10**.
+
+L'association de la réplication native Active Directory (DRS), de la synchronisation du SYSVOL, du respect des règles FSMO et d'un plan rigoureux de sauvegardes garantit une continuité de service maximale face aux pannes logicielles et matérielles.
