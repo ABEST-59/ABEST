@@ -23,7 +23,7 @@ Ce guide détaille les étapes d'inscription, de configuration du domaine et des
 Lors de l’inscription, les informations administratives initiales du compte sont les suivantes :
 * **Prénom :** Sylvain
 * **Nom :** THOREZ
-* **Adresse e‑mail actuelle :** `casmir69@gmail.com`
+* **Adresse e‑mail actuelle :** `@gmail.com`
 
 > ℹ️ **Note :** Ce compte devient automatiquement l’administrateur principal de l’organisation.
 
@@ -48,7 +48,7 @@ Google utilise ce domaine pour structurer les adresses e‑mail professionnelles
 
 ## 4. Choix du domaine pour le compte
 
-* **Domaine utilisé pour le compte :** `ldap.abest.ovh`
+* **Domaine utilisé pour le compte :** `abest.ovh`
 
 > ℹ️ Tant qu’aucune adresse e-mail personnalisée n’est activement configurée sur le domaine principal, les messages par défaut transitent par ce sous-domaine.
 
@@ -57,7 +57,7 @@ Google utilise ce domaine pour structurer les adresses e‑mail professionnelles
 ## 5. Création de l’utilisateur administrateur
 
 Le premier compte administrateur global de l’organisation a été configuré avec les paramètres suivants :
-* **Nom d’utilisateur :** `s.thorez@ldap.abest.ovh`
+* **Nom d’utilisateur :** `s.thorez@abest.ovh`
 * **Rôle :** Super Administrateur de l’organisation
 
 ---
@@ -65,7 +65,7 @@ Le premier compte administrateur global de l’organisation a été configuré a
 ## 6. Première connexion
 
 Connexion initiale effectuée via l’interface d’administration Google :
-* **Identifiant :** `s.thorez@ldap.abest.ovh`
+* **Identifiant :** `s.thorez@abest.ovh`
 
 ---
 
@@ -108,7 +108,7 @@ abest.ovh.              -> TXT   -> "google-site-verification=NAkhMQWE6PWZ6EMCrf
 
 Google confirme la bonne configuration :
 > **Votre domaine a été validé !**
-> Vous avez validé `ldap.abest.ovh`
+> Vous avez validé `abest.ovh`
 
 Fonctionnalités désormais débloquées :
 * Ajout d’utilisateurs supplémentaires
@@ -117,7 +117,7 @@ Fonctionnalités désormais débloquées :
 
 ---
 
-## 10. Étapes suivantes recommandées
+## 10. Étapes suivantes recommandées (A FAIRE)
 
 ### 1. Configuration des MX Google Workspace (Réception des e-mails)
 Ajouter les serveurs de messagerie Google dans la zone DNS OVH :
