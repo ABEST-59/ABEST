@@ -84,10 +84,12 @@ Technical documentation for the synchronization architecture between **Active Di
 3. Navigate to **Sync** tab.
 4. Click **Simulate sync** and verify the change log.
 5. Click **Sync & apply changes** to execute production synchronization.
+6. Save AS en fichier .xml (PLDC1_Config.xml et PLDC2_Config.xml)
 
 ### Scheduled Task Execution (CLI)
 To run GCDS in headless / batch mode using Windows Task Scheduler:
 
 ```cmd
 "C:\Program Files\Google Cloud Directory Sync\sync-cmd.exe" -apply -c "C:\path\to\config.xml"
+"FAIRE AVEC AWX"
 ```
