@@ -268,8 +268,8 @@ Ce document regroupe l'ensemble des étapes de configuration système, d'intégr
      enabled: yes
      apps:
        - name: opnsense
-         uri: "https://opnsense.abest.ovh"
-         public_addr: "opnsense.bastion.abest.ovh"
+         uri: "https://rudder.abest.ovh/rudder"
+         public_addr: "rdduer.bastion.abest.ovh"
          insecure_skip_verify: true
          labels:
            env: PRD
