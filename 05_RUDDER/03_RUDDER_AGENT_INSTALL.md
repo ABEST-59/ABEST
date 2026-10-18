@@ -11,6 +11,8 @@ Cette phase permet d'installer le paquet d'agent Rudder, de nettoyer les ancienn
 ```bash
 # Installation du paquet RPM de l'agent Rudder 9.1.5
 dnf install http://repository.rudder.io/rpm/9.1/RHEL_9/x86_64/rudder-agent-9.1.5-1.EL.9.x86_64.rpm -y
+# Installation du paquet RPM de TAR pour OpenSCAP
+dnf install -y tar
 
 # Suppression des anciens fichiers de configuration et certificats SSL
 rm -rf /opt/rudder/etc/agent.conf 
