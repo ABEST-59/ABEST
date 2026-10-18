@@ -42,6 +42,7 @@ Ce document détaille l'ensemble des procédures étape par étape pour déploye
    vi -f /etc/sudoers.d/domain_admins
    # AD group (prefix with %)
    %SSHSRVADM@ldap.abest.ovh    ALL=(ALL)    ALL
+   sudo chmod 440 /etc/sudoers.d/domain_admins
    ```
 
 ---
