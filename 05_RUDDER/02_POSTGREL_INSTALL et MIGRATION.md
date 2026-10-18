@@ -40,6 +40,8 @@ Ce document détaille l'ensemble des procédures étape par étape pour déploye
    sudo realm join ldap.abest.ovh -U Administrator --computer-ou="OU=LX,OU=Servers,OU=Devices,OU=DSI,OU=ABEST,DC=ldap,DC=abest,DC=ovh"
    sudo realm permit -g SSHSRVADM
    vi -f /etc/sudoers.d/domain_admins
+   # AD group (prefix with %)
+   %SSHSRVADM@ldap.abest.ovh    ALL=(ALL)    ALL
    ```
 
 ---
