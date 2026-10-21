@@ -144,7 +144,7 @@ db_connect_timeout = 10
 Lancez le script de configuration interactif :
 
 ```bash
-/opt/wapt/waptserver/scripts/postconf.sh
+/opt/wapt/waptserver/scripts/postconf.sh --force-https --server-names=wapt.abest.ovh
 ```
 
 ---
