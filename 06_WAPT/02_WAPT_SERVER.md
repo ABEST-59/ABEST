@@ -157,6 +157,9 @@ Créez les liens symboliques (ou copiez les fichiers) depuis le dossier Certbot 
 # Création du répertoire SSL s'il n'existe pas encore
 mkdir -p /opt/wapt/waptserver/ssl/
 
+mv /opt/wapt/waptserver/ssl/cert.pem /opt/wapt/waptserver/ssl/cert.old
+mv /opt/wapt/waptserver/ssl/key.pem /opt/wapt/waptserver/ssl/key.old
+
 # Liaison symbolique du certificat et de la clé privée
 ln -sf /etc/letsencrypt/live/wapt.abest.ovh/fullchain.pem /opt/wapt/waptserver/ssl/cert.pem
 ln -sf /etc/letsencrypt/live/wapt.abest.ovh/privkey.pem /opt/wapt/waptserver/ssl/key.pem
