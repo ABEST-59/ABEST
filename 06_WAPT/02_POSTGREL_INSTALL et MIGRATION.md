@@ -112,7 +112,7 @@ ssl_ca_file = 'root.crt'
 Éditez le fichier `/var/lib/pgsql/18/data/pg_hba.conf` pour autoriser le serveur WAPT :
 ```text
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
-host    waptdb          wapt            10.10.40.12/32          scram-sha-256
+host    waptdb          wapt            10.10.40.14/32          scram-sha-256
 ```
 
 ### C. Redémarrer le service
