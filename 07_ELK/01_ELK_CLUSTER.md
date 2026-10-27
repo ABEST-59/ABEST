@@ -151,12 +151,12 @@ dnf install -y firewalld
 systemctl enable --now firewalld
 
 # Affectation de l'interface et ouverture des ports REST & Transport
-firewall-cmd --permanent --zone=internal --change-interface=eth0
-firewall-cmd --permanent --zone=internal --add-port=9200/tcp
-firewall-cmd --permanent --zone=internal --add-port=9300/tcp
+firewall-cmd --permanent --add-port=9200/tcp
+firewall-cmd --permanent --add-port=9300/tcp
 
 # Rechargement des règles
 firewall-cmd --reload
+firewall-cmd --list-all
 ```
 
 ---
