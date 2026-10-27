@@ -102,6 +102,12 @@ Exécuter la commande d'installation en mode serveur :
   --install-servers
 ```
 
+### 3. Firewall
+
+```bash
+sudo firewall-cmd --permanent --add-port=8220/tcp
+sudo firewall-cmd --reload
+```
 ---
 
 ## 🔍 Étape 4 : Validation et Maintenance
