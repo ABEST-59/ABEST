@@ -85,7 +85,7 @@ Cette procédure décrit les étapes permettant de préparer, mettre à jour, jo
 
 1. Installez l'agent Rudder pour RHEL 9 :
    ```bash
-   sudo dnf install http://repository.rudder.io/rpm/9.1/RHEL_9/x86_64/rudder-agent-9.1.5-1.EL.9.x86_64.rpm -y
+   sudo dnf install http://repository.rudder.io/rpm/9.1/RHEL_10/x86_64/rudder-agent-9.1.5-1.EL.10.x86_64.rpm -y
    ```
 
 2. Préparez la configuration HTTPS :
