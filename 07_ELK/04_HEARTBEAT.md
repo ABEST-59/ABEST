@@ -7,11 +7,10 @@ Cette documentation décrit la procédure complète d'installation, de configura
 ## 📋 Table des matières
 1. [Vue d'ensemble](#1-vue-densemble)
 2. [Préréquis & Services surveillés](#2-préréquis--services-surveillés)
-3. [Résolution du problème de certificat Rudder (ECDSA)](#3-résolution-du-problème-de-certificat-rudder-ecdsa)
-4. [Installation & Configuration de Heartbeat](#4-installation--configuration-de-heartbeat)
-5. [Fichier de Configuration (`/etc/heartbeat/heartbeat.yml`)](#5-fichier-de-configuration-etcheartbeatheartbeatyml)
-6. [Validation, Initialisation et Démarrage](#6-validation-initialisation-et-démarrage)
-7. [Visualisation dans Kibana](#7-visualisation-dans-kibana)
+3. [Installation & Configuration de Heartbeat](#4-installation--configuration-de-heartbeat)
+4. [Fichier de Configuration (`/etc/heartbeat/heartbeat.yml`)](#5-fichier-de-configuration-etcheartbeatheartbeatyml)
+5. [Validation, Initialisation et Démarrage](#6-validation-initialisation-et-démarrage)
+6. [Visualisation dans Kibana](#7-visualisation-dans-kibana)
 
 ---
 
@@ -39,28 +38,7 @@ Heartbeat est un agent d'Elastic Stack exécutant du *Uptime Monitoring* (dispon
 
 ---
 
-## 3. Résolution du problème de certificat Rudder (ECDSA)
-
-### Le Problème
-Rudder utilise les récents certificats **ECDSA** de Let's Encrypt (chaîne avec autorité racine `ISRG Root X2`), contrairement aux autres services qui utilisent l'ancienne chaîne RSA (`ISRG Root X1`). Le magasin de certificats par défaut de la sonde rejette le certificat de Rudder avec l'erreur :
-> `x509: certificate signed by unknown authority`
-
-### La Solution
-Import de la racine `ISRG Root X2` dans la base de confiance du système Linux de la sonde `plelkannexe` :
-
-```bash
-# 1. Téléchargement du certificat racine ISRG Root X2
-sudo curl -s https://letsencrypt.org/certs/isrg-root-x2.pem -o /etc/pki/ca-trust/source/anchors/isrg-root-x2.pem
-
-# 2. Mise à jour du magasin de confiance du système
-sudo update-ca-trust extract
-```
-
-Cette étape permet à Heartbeat d'exécuter l'ensemble des 6 moniteurs en mode `ssl.verification_mode: "full"`, garantissant l'affichage exact de la date d'expiration (90 jours / 3 mois) dans Kibana.
-
----
-
-## 4. Installation & Configuration de Heartbeat
+## 3. Installation & Configuration de Heartbeat
 
 Procédure pas-à-pas exécutée sur la machine `plelkannexe` :
 
@@ -83,7 +61,7 @@ mv /etc/heartbeat/heartbeat.yml /etc/heartbeat/heartbeat.old1
 
 ---
 
-## 5. Fichier de Configuration (`/etc/heartbeat/heartbeat.yml`)
+## 4. Fichier de Configuration (`/etc/heartbeat/heartbeat.yml`)
 
 Contenu final du fichier `/etc/heartbeat/heartbeat.yml` :
 
@@ -183,7 +161,7 @@ logging.level: info
 
 ---
 
-## 6. Validation, Initialisation et Démarrage
+## 5. Validation, Initialisation et Démarrage
 
 Exécuter les commandes suivantes pour vérifier la configuration, charger les dashboards dans Kibana et activer le service :
 
@@ -200,7 +178,7 @@ sudo systemctl enable --now heartbeat-elastic
 
 ---
 
-## 7. Visualisation dans Kibana
+## 6. Visualisation dans Kibana
 
 1. Ouvrir l'interface Kibana : `https://10.10.40.21:5601`
 2. Aller dans le menu **Observability** > **Uptime**.
