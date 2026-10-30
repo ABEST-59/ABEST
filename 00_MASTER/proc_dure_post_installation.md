@@ -17,7 +17,7 @@ Cette procédure décrit les étapes permettant de préparer, mettre à jour, jo
 1. Mettez à jour le système et installez le client/serveur SSH ainsi que l'utilitaire `tar` :
    ```bash
    sudo dnf update -y
-   sudo dnf install openssh-server openssh-clients tar -y
+   sudo dnf install tar -y
    ```
 
 2. Ajustez la configuration SSH si nécessaire :
