@@ -106,7 +106,7 @@ teleport:
     token_name: ""
     method: token
   log:
-    output: stderr
+    output: /var/log/teleport.log
     severity: INFO
     format:
       output: text
@@ -127,7 +127,7 @@ auth_service:
 ssh_service:
   enabled: "yes"
   labels:
-    env: production
+    env: PRD
 
 proxy_service:
   enabled: "yes"
