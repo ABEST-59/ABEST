@@ -128,6 +128,7 @@ vi /opt/wapt/conf/waptserver.ini
 Ajoutez ou modifiez le bloc de configuration de la base de données :
 
 ```ini
+[options]
 db_type = postgresql
 db_host = postgres-wapt.abest.ovh
 db_port = 5432
