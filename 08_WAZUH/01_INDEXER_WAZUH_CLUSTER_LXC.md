@@ -250,6 +250,12 @@ echo "-Djava.io.tmpdir=/var/lib/wazuh-indexer/tmp" > /etc/wazuh-indexer/jvm.opti
 
 ### Étape 6 : Démarrage du Service et Initialisation du Cluster
 
+#### 0. Firewall :
+
+```bash
+sudo firewall-cmd --permanent --add-port=9200/tcp && sudo firewall-cmd --permanent --add-port=9300/tcp && sudo firewall-cmd --reload
+```
+
 #### 1. Démarrer le service sur les 5 nœuds :
 
 ```bash
