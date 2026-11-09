@@ -180,13 +180,12 @@ chmod 640 /var/ossec/etc/ossec.conf
 
 ## 🚀 6. Démarrage des Services & Validation
 
-```
+
 0. **Firewalld) :
    ```bash
    sudo firewall-cmd --permanent --add-port=1514/tcp && sudo firewall-cmd --permanent --add-port=1515/tcp && sudo firewall-cmd --reload
    ```
 
-```
 1. **Désactiver le dépôt Wazuh** (bonne pratique pour éviter les mises à jour inattendues) :
    ```bash
    sed -i "s/^enabled=1/enabled=0/" /etc/yum.repos.d/wazuh.repo
