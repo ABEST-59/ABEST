@@ -11,7 +11,7 @@ Ce document détaille la procédure complète d'installation, de configuration e
 | **`plwazuh3`** | `10.10.40.33` | `data`, `ingest` | Nœud de Données 1 | 
 | **`plwazuh4`** | `10.10.40.34` | `data`, `ingest` | Nœud de Données 2 | 
 | **`plwazuh5`** | `10.10.40.35` | `data`, `ingest` | Nœud de Données 3 | 
-| **`plwmanager`** | `10.10.40.41` | N/A | Serveur Wazuh Manager | 
+| **`plwmanager`** | `10.10.40.30` | N/A | Serveur Wazuh Manager | 
 | **`plwdashboard`** | `10.10.40.40` | N/A | Interface d'administration | 
 
 ---
