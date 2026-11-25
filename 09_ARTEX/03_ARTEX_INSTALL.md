@@ -42,28 +42,6 @@ pkill -f "./start.sh"
 pkill -f "/opt/artex/artex"
 ```
 
-Créez l'unité `/etc/systemd/system/artex.service` en choisissant l'une des deux directives `ExecStart` selon l'exposition réseau souhaitée :
-
-```ini
-[Unit]
-Description=ARTEX Application Service
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/artex
-ExecStart=/bin/bash /opt/artex/start.sh -addr 127.0.0.1:8787
-Restart=always
-RestartSec=5
-StandardOutput=append:/opt/artex/artex.log
-StandardError=append:/opt/artex/artex.log
-
-[Install]
-WantedBy=multi-user.target
-```
-
 * **Écoute sur toutes les interfaces (`0.0.0.0:8787`)** — nécessaire si des clients ou un reverse proxy distant doivent joindre directement le port `8787` de la machine (à combiner avec `firewalld`) :
 
 ```ini
@@ -110,7 +88,7 @@ sudo firewall-cmd --get-active-zones
 Ouvrez le port `8787/tcp` de manière permanente dans la zone active (exemple avec `public`) :
 
 ```bash
-sudo firewall-cmd --zone=public --add-port=8787/tcp --permanent
+sudo firewall-cmd --add-port=8787/tcp --permanent
 sudo firewall-cmd --reload
 sudo firewall-cmd --list-ports
 ```
